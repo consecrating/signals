@@ -102,12 +102,36 @@
 				cells.forEach(function(c){ grid.appendChild( makeTile(c[0],c[1]) ); });
 				rec.appendChild( grid );
 
-				// P&L Calculator for ₹10,000 budget.
-				var lotSize = 15; // BANKNIFTY lot.
-				var spotMove = Math.abs(parseFloat(s.target1) - parseFloat(s.entry_high));
-				var profitPerLot = (spotMove * 0.5 * lotSize).toFixed(0); // ~50% delta.
-				rec.appendChild( el('div','fnosp-rec-cond','💰 With ₹10,000: Buy 1 lot (15 qty) at market premium. Target spot move ₹' + spotMove.toFixed(0) + ' → est. profit ₹' + profitPerLot + '/lot.') );
-				rec.appendChild( el('div','fnosp-rec-cond','📌 Open your broker → Buy ' + esc(op.label) + ' at the live market price when spot crosses ₹' + num(s.entry_high)) );
+				// 💵 OPTION PREMIUM PLAN — the actual price to BUY the option and where to book it.
+				// Real lot size comes from the engine (never hardcoded).
+				var lotSize = ( data.advanced && data.advanced.risk_calculator && data.advanced.risk_calculator.lot_size )
+					? data.advanced.risk_calculator.lot_size
+					: ( data.snapshot && data.snapshot.lot_size ? data.snapshot.lot_size : 1 );
+				var premEntry = parseFloat( op.premium_now );
+				var premSrc   = ( op.premium_source === 'live' ) ? 'live' : 'est.';
+				var tg        = ( op.sell_when && op.sell_when.targets ) ? op.sell_when.targets : [];
+				var slPrem    = ( op.sell_when && op.sell_when.stop_loss ) ? op.sell_when.stop_loss.premium : null;
+
+				rec.appendChild( el('div','fnosp-section-title','💵 Option Premium Plan — Buy ' + esc(op.label)) );
+				var pgrid = el( 'div', 'fnosp-grid' );
+				var pcells = [
+					['💵 Buy premium (' + premSrc + ')', '₹' + num(op.premium_now)],
+					['🎯 Sell T1 (premium)', tg[0] ? '₹' + num(tg[0].premium) : '-'],
+					['🎯 Sell T2 (premium)', tg[1] ? '₹' + num(tg[1].premium) : '-'],
+					['🛑 Premium Stop', slPrem != null ? '₹' + num(slPrem) : '-'],
+					['📐 Delta', num(op.delta)],
+					['📦 Lot Size', num(lotSize) + ' qty']
+				];
+				pcells.forEach(function(c){ pgrid.appendChild( makeTile(c[0],c[1]) ); });
+				rec.appendChild( pgrid );
+
+				// P&L using the option premium itself (not a spot-delta guess).
+				if ( !isNaN( premEntry ) && premEntry > 0 ) {
+					var costPerLot = Math.round( premEntry * lotSize );
+					var profitT1   = tg[0] ? Math.round( ( parseFloat(tg[0].premium) - premEntry ) * lotSize ) : 0;
+					rec.appendChild( el('div','fnosp-rec-cond','💰 1 lot (' + lotSize + ' qty) ≈ ₹' + costPerLot + ' to buy at ₹' + num(op.premium_now) + ' premium. At Target 1 (₹' + (tg[0]?num(tg[0].premium):'-') + ') est. profit ≈ ₹' + profitT1 + '/lot.') );
+				}
+				rec.appendChild( el('div','fnosp-rec-cond','📌 In your broker: buy ' + esc(op.label) + ' when spot crosses ₹' + num(s.entry_high) + '. Premium shown is ' + ( premSrc === 'live' ? 'live' : 'an estimate' ) + ' — confirm the actual premium before ordering.') );
 			} else {
 				rec.appendChild( el('div','fnosp-rec-cond fnosp-rec-warn','⏸ Waiting for entry. Signal is ' + esc(data.signal) + ' (' + esc(data.confidence) + '%). Targets appear on confirmed BUY/SELL.') );
 				rec.appendChild( el('div','fnosp-rec-cond','📌 Entry condition: ' + esc(op.buy_when.condition)) );

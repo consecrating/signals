@@ -175,6 +175,11 @@ a current Sonnet model; you can change it to an Opus model id if you prefer.
 * Fix: updated index F&O lot sizes to current NSE/BSE values (NSE revision eff.
   30-Dec-2025) — NIFTY 65, BANKNIFTY 30, FINNIFTY 60, MIDCPNIFTY 120, SENSEX 20.
   Corrects the per-lot risk/reward (rupee) figures.
+* Fix: the admin dashboard now shows the Option Premium Plan (buy premium,
+  premium targets, premium stop-loss, delta) for the recommended strike, so
+  you can see at what price to buy the option — not just spot levels.
+* Fix: the dashboard P&L line no longer hardcodes a 15-qty BANKNIFTY lot; it
+  uses the live lot size for the actual instrument.
 * Fix: expiry dates are now computed dynamically per instrument instead of a
   hardcoded list that expired in 2027. NSE indices settle Tuesday, BSE SENSEX
   Thursday; weekly expiries apply only to NIFTY (NSE) and SENSEX (BSE), all
