@@ -388,6 +388,15 @@ class FnOSP_Signal_Engine {
 		$prem_src = ( $live > 0 ) ? 'live' : 'model estimate';
 		$prem_now   = ( $live > 0 ) ? round( $live, 2 ) : $model_now;
 		$prem_entry = $prem_now;
+
+		// Premium BUY range: the option premium across the entry spot band
+		// (entry_lo..entry_hi), so the user sees a price band to buy in — not
+		// just a single number. Anchored to live premium when supplied.
+		$prem_at_lo    = round( $price_at( $entry_lo ) * $factor, 2 );
+		$prem_at_hi    = round( $price_at( $entry_hi ) * $factor, 2 );
+		$prem_entry_lo = min( $prem_at_lo, $prem_at_hi );
+		$prem_entry_hi = max( $prem_at_lo, $prem_at_hi );
+
 		$prem_t1    = round( $price_at( $t1_spot ) * $factor, 2 );
 		$prem_t2    = round( $price_at( $t2_spot ) * $factor, 2 );
 		$prem_t3    = round( $price_at( $t3_spot ) * $factor, 2 );
@@ -425,6 +434,9 @@ class FnOSP_Signal_Engine {
 			'moneyness'     => $moneyness,
 			'delta'         => $delta,
 			'premium_now'   => $prem_now,
+			'premium_entry_low'  => $prem_entry_lo,
+			'premium_entry_high' => $prem_entry_hi,
+			'premium_range'      => '₹' . number_format_i18n( $prem_entry_lo, 2 ) . ' – ₹' . number_format_i18n( $prem_entry_hi, 2 ),
 			'premium_source' => $prem_src,
 			'aligned'       => $aligned,
 			'align_note'    => $align_note,
@@ -432,7 +444,7 @@ class FnOSP_Signal_Engine {
 			'buy_when'      => array(
 				'condition'   => sprintf( 'BUY when %s.', $trigger ),
 				'entry_zone'  => '₹' . number_format_i18n( $entry_lo, 2 ) . ' – ₹' . number_format_i18n( $entry_hi, 2 ) . ' (underlying)',
-				'est_premium' => '≈ ₹' . number_format_i18n( $prem_entry, 2 ) . ' per lot-unit',
+				'est_premium' => '₹' . number_format_i18n( $prem_entry_lo, 2 ) . ' – ₹' . number_format_i18n( $prem_entry_hi, 2 ) . ' per lot-unit',
 				'avoid'       => array(
 					'Avoid buying in the last ~30 min if trading intraday (theta + low liquidity).',
 					( $iv * 100 >= 22 ) ? sprintf( 'IV is high (%.0f%%) — premium is expensive; prefer a spread over a naked buy.', $iv * 100 ) : 'IV is reasonable for a naked buy.',

@@ -113,9 +113,10 @@
 				var slPrem    = ( op.sell_when && op.sell_when.stop_loss ) ? op.sell_when.stop_loss.premium : null;
 
 				rec.appendChild( el('div','fnosp-section-title','💵 Option Premium Plan — Buy ' + esc(op.label)) );
+				var buyRange = op.premium_range ? op.premium_range : ( '₹' + num(op.premium_now) );
 				var pgrid = el( 'div', 'fnosp-grid' );
 				var pcells = [
-					['💵 Buy premium (' + premSrc + ')', '₹' + num(op.premium_now)],
+					['💵 Buy premium range (' + premSrc + ')', buyRange],
 					['🎯 Sell T1 (premium)', tg[0] ? '₹' + num(tg[0].premium) : '-'],
 					['🎯 Sell T2 (premium)', tg[1] ? '₹' + num(tg[1].premium) : '-'],
 					['🛑 Premium Stop', slPrem != null ? '₹' + num(slPrem) : '-'],
