@@ -87,3 +87,9 @@
 
 
 .fnosp-premium-note { font-size: 11px; color: #888; font-style: italic; margin-top: 6px; }
+
+
+/* Specific-strike input row */
+.fnosp-controls-strike { margin-top: 8px; flex-wrap: wrap; align-items: center; gap: 8px; }
+.fnosp-controls-strike label { font-weight: 600; }
+.fnosp-controls-strike .description { flex-basis: 100%; }

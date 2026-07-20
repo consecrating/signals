@@ -3,7 +3,7 @@
  * Plugin Name:       F&O Signal Pro
  * Plugin URI:        https://example.com/fno-signal-pro
  * Description:       Institutional-grade Futures & Options trading signal engine for NIFTY, BANKNIFTY, FINNIFTY, SENSEX, MIDCPNIFTY, stock futures & equity options. Combines a 100-point quantitative scoring framework with optional AI (Anthropic Claude) narrative analysis. Fast, cached, REST-powered.
- * Version:           2.1.0
+ * Version:           2.2.0
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            F&O Signal Pro
@@ -25,7 +25,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
-define( 'FNOSP_VERSION', '2.1.0' );
+define( 'FNOSP_VERSION', '2.2.0' );
 define( 'FNOSP_PLUGIN_FILE', __FILE__ );
 define( 'FNOSP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FNOSP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

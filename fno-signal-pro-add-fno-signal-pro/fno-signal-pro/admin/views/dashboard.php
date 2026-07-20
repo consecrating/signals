@@ -58,6 +58,19 @@ $top_stocks    = array_slice( $scan_universe, 0, 10 ); // Show top 10 from unive
 		<span class="fnosp-refresh-info" id="fnosp-refresh-info"><?php esc_html_e( 'Auto-refresh: 5s', 'fno-signal-pro' ); ?></span>
 	</div>
 
+	<div class="fnosp-controls fnosp-controls-strike">
+		<label for="fnosp-strike"><?php esc_html_e( 'Specific strike', 'fno-signal-pro' ); ?></label>
+		<input type="number" id="fnosp-strike" step="1" min="0" placeholder="<?php esc_attr_e( 'e.g. 57500', 'fno-signal-pro' ); ?>" style="width:110px;" />
+		<select id="fnosp-opt-type">
+			<option value="CE"><?php esc_html_e( 'CE (Call)', 'fno-signal-pro' ); ?></option>
+			<option value="PE"><?php esc_html_e( 'PE (Put)', 'fno-signal-pro' ); ?></option>
+		</select>
+		<input type="number" id="fnosp-premium" step="0.05" min="0" placeholder="<?php esc_attr_e( 'your live premium ₹ (optional)', 'fno-signal-pro' ); ?>" style="width:180px;" />
+		<button class="button button-small button-primary" id="fnosp-strike-go"><?php esc_html_e( 'Analyze Strike', 'fno-signal-pro' ); ?></button>
+		<button class="button button-small" id="fnosp-strike-clear"><?php esc_html_e( 'Auto (ATM)', 'fno-signal-pro' ); ?></button>
+		<span class="description" style="width:100%;margin-top:4px;color:#646970;"><?php esc_html_e( 'Enter the strike you want to trade (indices only), pick CE/PE, and optionally your live premium for exact targets. Leave blank for the automatic ATM strike.', 'fno-signal-pro' ); ?></span>
+	</div>
+
 	<!-- Signal output (auto-populated) -->
 	<div id="fnosp-result" class="fnosp-result" aria-live="polite">
 		<p class="fnosp-loading"><?php esc_html_e( 'Loading signal...', 'fno-signal-pro' ); ?></p>

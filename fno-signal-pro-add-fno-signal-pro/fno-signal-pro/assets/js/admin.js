@@ -9,6 +9,45 @@
 	function badgeClass( s ) { return s === 'BUY' ? 'buy' : ( s === 'SELL' ? 'sell' : 'notrade' ); }
 	function makeTile( k, v ) { var t = el('div','fnosp-tile'); t.innerHTML = '<div class="k">' + esc(k) + '</div><div class="v">' + esc(v) + '</div>'; return t; }
 
+	// Renders the option premium plan (buy price range, premium targets, stop, delta, lot).
+	// Shown for every F&O signal — whether ATM-auto or a user-entered strike.
+	function renderPremiumPlan( rec, op, data, setup ) {
+		var lotSize = ( data.advanced && data.advanced.risk_calculator && data.advanced.risk_calculator.lot_size )
+			? data.advanced.risk_calculator.lot_size
+			: ( data.snapshot && data.snapshot.lot_size ? data.snapshot.lot_size : 1 );
+		var premEntry = parseFloat( op.premium_now );
+		var premSrc   = ( op.premium_source === 'live' ) ? 'live' : 'est.';
+		var tg        = ( op.sell_when && op.sell_when.targets ) ? op.sell_when.targets : [];
+		var slPrem    = ( op.sell_when && op.sell_when.stop_loss ) ? op.sell_when.stop_loss.premium : null;
+		var buyRange  = op.premium_range ? op.premium_range : ( '₹' + num(op.premium_now) );
+
+		rec.appendChild( el('div','fnosp-section-title','💵 Option Premium Plan — Buy ' + esc(op.label)) );
+		var pgrid = el( 'div', 'fnosp-grid' );
+		var pcells = [
+			['💵 Buy premium range (' + premSrc + ')', buyRange],
+			['🎯 Sell T1 (premium)', tg[0] ? '₹' + num(tg[0].premium) : '-'],
+			['🎯 Sell T2 (premium)', tg[1] ? '₹' + num(tg[1].premium) : '-'],
+			['🛑 Premium Stop', slPrem != null ? '₹' + num(slPrem) : '-'],
+			['📐 Delta', num(op.delta)],
+			['📦 Lot Size', num(lotSize) + ' qty']
+		];
+		pcells.forEach(function(c){ pgrid.appendChild( makeTile(c[0],c[1]) ); });
+		rec.appendChild( pgrid );
+
+		if ( !isNaN( premEntry ) && premEntry > 0 ) {
+			var costPerLot = Math.round( premEntry * lotSize );
+			var line = '💰 1 lot (' + lotSize + ' qty) ≈ ₹' + costPerLot + ' to buy at ₹' + num(op.premium_now) + ' premium.';
+			if ( tg[0] ) {
+				var profitT1 = Math.round( ( parseFloat(tg[0].premium) - premEntry ) * lotSize );
+				line += ' At Target 1 (₹' + num(tg[0].premium) + ') est. profit ≈ ₹' + profitT1 + '/lot.';
+			}
+			rec.appendChild( el('div','fnosp-rec-cond', line) );
+		}
+		if ( setup ) {
+			rec.appendChild( el('div','fnosp-rec-cond','📌 In your broker: buy ' + esc(op.label) + ' when spot crosses ₹' + num(setup.entry_high) + '.') );
+		}
+	}
+
 	// --- TradingView symbol mapping ---
 	function tvSymbol( sym ) {
 		var m = { NIFTY:'NSE:NIFTY', NIFTY50:'NSE:NIFTY', BANKNIFTY:'NSE:BANKNIFTY', FINNIFTY:'NSE:CNXFINANCE', MIDCPNIFTY:'NSE:NIFTYMIDSELECT', SENSEX:'BSE:SENSEX' };
@@ -86,7 +125,7 @@
 			var isConfirmed = ( data.signal === 'BUY' || data.signal === 'SELL' );
 			var rec = el( 'div', 'fnosp-rec' );
 
-			rec.innerHTML = '<div class="fnosp-rec-title">⚡ ' + esc(op.label) + ' · Expiry ' + esc(op.expiry_date) + '</div>';
+			rec.innerHTML = '<div class="fnosp-rec-title">⚡ ' + esc(op.label) + ' · Expiry ' + esc(op.expiry_date) + ( op.moneyness ? ' · ' + esc(op.moneyness) : '' ) + '</div>';
 
 			if ( isConfirmed && data.setup ) {
 				var s = data.setup;
@@ -101,44 +140,15 @@
 				];
 				cells.forEach(function(c){ grid.appendChild( makeTile(c[0],c[1]) ); });
 				rec.appendChild( grid );
-
-				// 💵 OPTION PREMIUM PLAN — the actual price to BUY the option and where to book it.
-				// Real lot size comes from the engine (never hardcoded).
-				var lotSize = ( data.advanced && data.advanced.risk_calculator && data.advanced.risk_calculator.lot_size )
-					? data.advanced.risk_calculator.lot_size
-					: ( data.snapshot && data.snapshot.lot_size ? data.snapshot.lot_size : 1 );
-				var premEntry = parseFloat( op.premium_now );
-				var premSrc   = ( op.premium_source === 'live' ) ? 'live' : 'est.';
-				var tg        = ( op.sell_when && op.sell_when.targets ) ? op.sell_when.targets : [];
-				var slPrem    = ( op.sell_when && op.sell_when.stop_loss ) ? op.sell_when.stop_loss.premium : null;
-
-				rec.appendChild( el('div','fnosp-section-title','💵 Option Premium Plan — Buy ' + esc(op.label)) );
-				var buyRange = op.premium_range ? op.premium_range : ( '₹' + num(op.premium_now) );
-				var pgrid = el( 'div', 'fnosp-grid' );
-				var pcells = [
-					['💵 Buy premium range (' + premSrc + ')', buyRange],
-					['🎯 Sell T1 (premium)', tg[0] ? '₹' + num(tg[0].premium) : '-'],
-					['🎯 Sell T2 (premium)', tg[1] ? '₹' + num(tg[1].premium) : '-'],
-					['🛑 Premium Stop', slPrem != null ? '₹' + num(slPrem) : '-'],
-					['📐 Delta', num(op.delta)],
-					['📦 Lot Size', num(lotSize) + ' qty']
-				];
-				pcells.forEach(function(c){ pgrid.appendChild( makeTile(c[0],c[1]) ); });
-				rec.appendChild( pgrid );
-
-				// P&L using the option premium itself (not a spot-delta guess).
-				if ( !isNaN( premEntry ) && premEntry > 0 ) {
-					var costPerLot = Math.round( premEntry * lotSize );
-					var profitT1   = tg[0] ? Math.round( ( parseFloat(tg[0].premium) - premEntry ) * lotSize ) : 0;
-					rec.appendChild( el('div','fnosp-rec-cond','💰 1 lot (' + lotSize + ' qty) ≈ ₹' + costPerLot + ' to buy at ₹' + num(op.premium_now) + ' premium. At Target 1 (₹' + (tg[0]?num(tg[0].premium):'-') + ') est. profit ≈ ₹' + profitT1 + '/lot.') );
-				}
-				rec.appendChild( el('div','fnosp-rec-cond','📌 In your broker: buy ' + esc(op.label) + ' when spot crosses ₹' + num(s.entry_high) + '. Premium shown is ' + ( premSrc === 'live' ? 'live' : 'an estimate' ) + ' — confirm the actual premium before ordering.') );
 			} else {
-				rec.appendChild( el('div','fnosp-rec-cond fnosp-rec-warn','⏸ Waiting for entry. Signal is ' + esc(data.signal) + ' (' + esc(data.confidence) + '%). Targets appear on confirmed BUY/SELL.') );
-				rec.appendChild( el('div','fnosp-rec-cond','📌 Entry condition: ' + esc(op.buy_when.condition)) );
+				rec.appendChild( el('div','fnosp-rec-cond fnosp-rec-warn','⏸ Signal is ' + esc(data.signal) + ' (' + esc(data.confidence) + '%). Spot entry/target levels appear on a confirmed BUY/SELL — the option premium plan below is for the selected strike.') );
 			}
 
-			rec.appendChild( el('div','fnosp-premium-note','All levels are based on live spot price. Check your broker for the actual option premium before trading.') );
+			// 💵 OPTION PREMIUM PLAN — always shown, so you can see the price to buy THIS strike
+			// (whether it is the auto ATM strike or one you entered).
+			renderPremiumPlan( rec, op, data, ( isConfirmed && data.setup ) ? data.setup : null );
+
+			rec.appendChild( el('div','fnosp-premium-note','Spot levels use the live index price. The option premium is ' + ( op.premium_source === 'live' ? 'based on your entered live price' : 'a Black-Scholes estimate' ) + ' — always confirm the live premium in your broker before trading.') );
 			wrap.appendChild( rec );
 		}
 
@@ -242,6 +252,9 @@
 	var currentSym = '';
 	var refreshTimer = null;
 	var lockedSignal = null; // Stores the LOCKED signal so levels don't fluctuate.
+	var currentStrike = '';   // User-entered strike (optional; indices only).
+	var currentOptType = 'CE';
+	var currentPremium = '';  // User's live premium (optional; anchors targets).
 
 	function fetchSignal( sym, silent ) {
 		currentSym = sym || currentSym;
@@ -249,6 +262,12 @@
 		if ( !silent ) { out.innerHTML = '<p class="fnosp-loading">' + FNOSP_ADMIN.i18n.loading + '</p>'; lockedSignal = null; }
 
 		var url = FNOSP_ADMIN.restUrl + '?instrument=' + encodeURIComponent(currentSym) + '&nocache=1';
+		if ( currentStrike && parseFloat(currentStrike) > 0 ) {
+			url += '&strike=' + encodeURIComponent(currentStrike) + '&opt_type=' + encodeURIComponent(currentOptType || 'CE');
+			if ( currentPremium && parseFloat(currentPremium) > 0 ) {
+				url += '&premium=' + encodeURIComponent(currentPremium);
+			}
+		}
 		fetch( url, { headers:{'X-WP-Nonce':FNOSP_ADMIN.nonce}, credentials:'same-origin' })
 			.then(function(r){
 				var ct = r.headers.get('content-type') || '';
@@ -390,10 +409,18 @@
 
 		// Chart — will be rendered/updated by fetchSignal after data arrives.
 
+		// Helper: clear the manual strike inputs (a strike is instrument-specific).
+		function clearStrikeInputs() {
+			currentStrike = ''; currentPremium = '';
+			var st = document.getElementById('fnosp-strike'); if ( st ) st.value = '';
+			var pr = document.getElementById('fnosp-premium'); if ( pr ) pr.value = '';
+		}
+
 		// Instrument change
 		if ( instEl ) {
 			instEl.addEventListener( 'change', function() {
-				lockedSignal = null; // Reset lock on instrument change.
+				clearStrikeInputs();  // Strike from another index no longer applies.
+				lockedSignal = null;  // Reset lock on instrument change.
 				fetchSignal( instEl.value, false );
 			});
 		}
@@ -401,8 +428,36 @@
 		// Stock search
 		var searchBtn = document.getElementById('fnosp-search-go');
 		var searchInput = document.getElementById('fnosp-search');
-		if ( searchBtn ) searchBtn.addEventListener( 'click', doSearch );
-		if ( searchInput ) searchInput.addEventListener( 'keydown', function(e){ if(e.key==='Enter'){e.preventDefault();doSearch();} });
+		if ( searchBtn ) searchBtn.addEventListener( 'click', function(){ clearStrikeInputs(); doSearch(); } );
+		if ( searchInput ) searchInput.addEventListener( 'keydown', function(e){ if(e.key==='Enter'){e.preventDefault();clearStrikeInputs();doSearch();} });
+
+		// Analyze a specific strike (e.g. 57500 CE) — indices only.
+		var strikeGo = document.getElementById('fnosp-strike-go');
+		if ( strikeGo ) strikeGo.addEventListener( 'click', function() {
+			var st = document.getElementById('fnosp-strike');
+			var ot = document.getElementById('fnosp-opt-type');
+			var pr = document.getElementById('fnosp-premium');
+			currentStrike  = st ? ( st.value || '' ).trim() : '';
+			currentOptType = ot ? ot.value : 'CE';
+			currentPremium = pr ? ( pr.value || '' ).trim() : '';
+			if ( !currentStrike || parseFloat( currentStrike ) <= 0 ) { if ( st ) st.focus(); return; }
+			lockedSignal = null;
+			fetchSignal( currentSym, false );
+		});
+
+		// Reset back to the automatic ATM strike.
+		var strikeClear = document.getElementById('fnosp-strike-clear');
+		if ( strikeClear ) strikeClear.addEventListener( 'click', function() {
+			clearStrikeInputs();
+			lockedSignal = null;
+			fetchSignal( currentSym, false );
+		});
+
+		// Enter key on the strike/premium boxes triggers analysis.
+		['fnosp-strike','fnosp-premium'].forEach(function(id){
+			var n = document.getElementById(id);
+			if ( n ) n.addEventListener( 'keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); if(strikeGo) strikeGo.click(); } });
+		});
 
 		// Today's Top Picks (auto-load)
 		loadScan();

@@ -4,7 +4,7 @@ Tags: trading, futures, options, nifty, banknifty, signals, fno
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 2.1.0
+Stable tag: 2.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -170,6 +170,16 @@ Any model id your Anthropic account supports. Set it in Settings. The default is
 a current Sonnet model; you can change it to an Opus model id if you prefer.
 
 == Changelog ==
+
+= 2.2.0 =
+* New: "Specific strike" input on the dashboard — enter a strike (e.g. 57500),
+  choose CE/PE, and optionally your live premium to get that exact contract's
+  buy premium range, premium targets, premium stop-loss, delta and lot size.
+* The Option Premium Plan now shows for every F&O signal (auto ATM or a strike
+  you entered), even when the signal is "waiting" (no confirmed BUY/SELL).
+* Note: strike is instrument-specific — do NOT type a strike in the ticker
+  search box (that box is for symbols like BANKNIFTY/TATASTEEL). Use the new
+  "Specific strike" field instead.
 
 = 2.1.0 =
 * Fix: updated index F&O lot sizes to current NSE/BSE values (NSE revision eff.
