@@ -163,6 +163,7 @@ def build_snapshot(instrument: str, intraday: List[list], daily: List[list],
         "vix": vix if vix > 0 else 13.0,
         "call_oi_chg": oc.get("call_oi_chg", 0),
         "put_oi_chg": oc.get("put_oi_chg", 0),
+        "oc_ltp": oc.get("ltp_map", {}),
         # Macro fields Angel does not provide -> neutral (plugin scores them lightly).
         "fii_net": 0.0, "dii_net": 0.0, "adv_decline": 1.0,
         "sector_strength": 0, "news_sentiment": 0.0,

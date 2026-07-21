@@ -6,6 +6,21 @@
 	function el( tag, cls, html ) { var n = document.createElement( tag ); if ( cls ) n.className = cls; if ( html !== undefined ) n.innerHTML = html; return n; }
 	function esc( s ) { var d = document.createElement( 'div' ); d.textContent = ( s == null ) ? '' : String( s ); return d.innerHTML; }
 	function num( v ) { return ( v == null || v === '' ) ? '-' : v; }
+	function istDateTime( iso ) {
+		try {
+			var d = iso ? new Date( iso ) : new Date();
+			return d.toLocaleString( 'en-IN', { timeZone: 'Asia/Kolkata', hour12: true,
+				year: 'numeric', month: 'short', day: '2-digit',
+				hour: '2-digit', minute: '2-digit', second: '2-digit' } ) + ' IST';
+		} catch ( e ) { return iso || ''; }
+	}
+	function istClock( iso ) {
+		try {
+			var d = iso ? new Date( iso ) : new Date();
+			return d.toLocaleTimeString( 'en-IN', { timeZone: 'Asia/Kolkata', hour12: true,
+				hour: '2-digit', minute: '2-digit', second: '2-digit' } ) + ' IST';
+		} catch ( e ) { return ''; }
+	}
 	function badgeClass( s ) { return s === 'BUY' ? 'buy' : ( s === 'SELL' ? 'sell' : 'notrade' ); }
 	function makeTile( k, v ) { var t = el('div','fnosp-tile'); t.innerHTML = '<div class="k">' + esc(k) + '</div><div class="v">' + esc(v) + '</div>'; return t; }
 
@@ -22,8 +37,12 @@
 		var buyRange  = op.premium_range ? op.premium_range : ( '₹' + num(op.premium_now) );
 
 		rec.appendChild( el('div','fnosp-section-title','💵 Option Premium Plan — Buy ' + esc(op.label)) );
+		var livePrem = ( op.live_premium != null )
+			? ( '₹' + num(op.live_premium) + ' (live)' )
+			: ( '₹' + num(op.premium_now) + ' (est.)' );
 		var pgrid = el( 'div', 'fnosp-grid' );
 		var pcells = [
+			['💹 Current live premium', livePrem],
 			['💵 Buy premium range (' + premSrc + ')', buyRange],
 			['🎯 Sell T1 (premium)', tg[0] ? '₹' + num(tg[0].premium) : '-'],
 			['🎯 Sell T2 (premium)', tg[1] ? '₹' + num(tg[1].premium) : '-'],
@@ -46,6 +65,27 @@
 		if ( setup ) {
 			rec.appendChild( el('div','fnosp-rec-cond','📌 In your broker: buy ' + esc(op.label) + ' when spot crosses ₹' + num(setup.entry_high) + '.') );
 		}
+	}
+
+	// Bottom "trade ticket": Buy price, Sell T1/T2, SL, spot trigger, and IST date/time.
+	function renderTicket( data ) {
+		var op = data.option_plan;
+		var tg = ( op.sell_when && op.sell_when.targets ) ? op.sell_when.targets : [];
+		var sl = ( op.sell_when && op.sell_when.stop_loss ) ? op.sell_when.stop_loss.premium : null;
+		var setup = data.setup || data.projection || {};
+		var buyPrem = ( op.premium_range ) ? op.premium_range : ( '₹' + num( op.live_premium != null ? op.live_premium : op.premium_now ) );
+		var status = data.confirmed ? '✅ CONFIRMED' : '⏳ FORMING (expected)';
+		var t = el( 'div', 'fnosp-ticket' );
+		t.innerHTML =
+			'<div class="fnosp-ticket-head">🧾 Trade Ticket — ' + esc(op.label) + ' · ' + status + '</div>' +
+			'<table class="fnosp-ticket-tbl"><tbody>' +
+			'<tr><td>Buy Price (premium)</td><td>' + esc(buyPrem) + '</td></tr>' +
+			'<tr><td>Sell Price — T1 / T2</td><td>₹' + num(tg[0]?tg[0].premium:'-') + ' / ₹' + num(tg[1]?tg[1].premium:'-') + '</td></tr>' +
+			'<tr><td>Stop Loss (premium)</td><td>₹' + num(sl!=null?sl:'-') + '</td></tr>' +
+			'<tr><td>Spot Buy Trigger</td><td>₹' + num(setup.entry_high) + '</td></tr>' +
+			'<tr><td>Date &amp; Time</td><td>' + esc(istDateTime(data.generated_at)) + '</td></tr>' +
+			'</tbody></table>';
+		return t;
 	}
 
 	// --- TradingView symbol mapping ---
@@ -111,6 +151,7 @@
 		head.innerHTML = '<span class="fnosp-badge ' + badgeClass(data.signal) + '">' + esc(data.signal) + '</span>'
 			+ ' <strong>' + esc(data.instrument) + '</strong> @ ₹' + esc(data.ltp)
 			+ '<span class="fnosp-conf">Confidence <strong>' + esc(data.confidence) + '%</strong> · ' + esc(data.trend_label) + '</span>'
+			+ '<span class="fnosp-analyzed" title="Market data, indicators & news are re-analyzed continuously">⟳ Live analysis · ' + esc(istClock(data.generated_at)) + '</span>'
 			+ '<span class="fnosp-locked-badge">🔒 Levels locked</span>';
 		wrap.appendChild( head );
 
@@ -141,7 +182,24 @@
 				cells.forEach(function(c){ grid.appendChild( makeTile(c[0],c[1]) ); });
 				rec.appendChild( grid );
 			} else {
-				rec.appendChild( el('div','fnosp-rec-cond fnosp-rec-warn','⏸ Signal is ' + esc(data.signal) + ' (' + esc(data.confidence) + '%). Spot entry/target levels appear on a confirmed BUY/SELL — the option premium plan below is for the selected strike.') );
+				// Not confirmed yet — show the EXPECTED levels (projection) in advance,
+				// so you can get ready before the trade confirms.
+				rec.appendChild( el('div','fnosp-rec-cond fnosp-rec-warn','⏳ Setup forming (' + esc(data.signal) + ' · ' + esc(data.confidence) + '%). Expected levels below — updated live so you get advance notice. It becomes a confirmed trade when confidence clears the threshold.') );
+				var pj = data.projection;
+				if ( pj ) {
+					var eg = el( 'div', 'fnosp-grid' );
+					var edir = data.projection_direction || 'BUY';
+					var ecells = [
+						['🧭 Expected side', edir + ( op.type ? ' · ' + esc(op.type) : '' )],
+						['📍 Expected entry', '₹' + num(pj.entry_high) + ' (spot)'],
+						['🎯 Expected T1', '₹' + num(pj.target1)],
+						['🎯 Expected T2', '₹' + num(pj.target2)],
+						['🛑 Expected SL', '₹' + num(pj.stop_loss)],
+						['⚖️ R:R', num(pj.risk_reward)]
+					];
+					ecells.forEach(function(c){ eg.appendChild( makeTile(c[0],c[1]) ); });
+					rec.appendChild( eg );
+				}
 			}
 
 			// 💵 OPTION PREMIUM PLAN — always shown, so you can see the price to buy THIS strike
@@ -243,8 +301,13 @@
 			wrap.appendChild( adv );
 		}
 
+		// 🧾 Bottom trade ticket (F&O only): Buy/Sell T1/T2/SL + IST date-time.
+		if ( data.is_fno && data.option_plan ) {
+			wrap.appendChild( renderTicket( data ) );
+		}
+
 		// Meta
-		wrap.appendChild( el('div','fnosp-disclaimer', esc(data.source) + (data.cached?' (cached)':'') + ' · ' + esc(data.generated_at) + '<br>' + esc(data.disclaimer)) );
+		wrap.appendChild( el('div','fnosp-disclaimer', esc(data.source) + (data.cached?' (cached)':'') + ' · analyzed ' + esc(istDateTime(data.generated_at)) + '<br>' + esc(data.disclaimer)) );
 		return wrap;
 	}
 
@@ -285,10 +348,14 @@
 				// 1. No locked signal yet (first load), OR
 				// 2. The direction has CHANGED (BUY->SELL, SELL->NO TRADE, etc.), OR
 				// 3. User manually switched instrument (silent=false on first call).
-				if ( !lockedSignal || lockedSignal.signal !== data.signal || lockedSignal.instrument !== data.instrument ) {
+				if ( !lockedSignal || lockedSignal.signal !== data.signal || lockedSignal.instrument !== data.instrument
+					|| data.signal === 'NO TRADE' ) {
+					// First load, direction change, or still forming (NO TRADE):
+					// take the fresh data so expected premium/levels update live.
 					lockedSignal = data;
 				} else {
-					// Direction same — only update LTP (live price), keep T1/T2/T3/SL locked.
+					// Confirmed BUY/SELL and same direction — keep T1/T2/T3/SL locked,
+					// only refresh the live price, confidence and timestamp.
 					lockedSignal.ltp = data.ltp;
 					lockedSignal.confidence = data.confidence;
 					lockedSignal.generated_at = data.generated_at;

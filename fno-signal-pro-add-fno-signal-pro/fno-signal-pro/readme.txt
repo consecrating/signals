@@ -4,7 +4,7 @@ Tags: trading, futures, options, nifty, banknifty, signals, fno
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 2.2.0
+Stable tag: 2.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -170,6 +170,20 @@ Any model id your Anthropic account supports. Set it in Settings. The default is
 a current Sonnet model; you can change it to an Opus model id if you prefer.
 
 == Changelog ==
+
+= 2.3.0 =
+* New: pre-confirmation projection — the expected Buy premium, T1, T2, SL and
+  spot entry now show while a setup is still forming (before it confirms), and
+  update live so you get advance notice instead of only seeing them after
+  confirmation.
+* New: "Current live premium" — when the NSE proxy (or Angel One feed) is
+  connected, the option's live premium is captured from the chain and used for
+  the buy range and targets (source shows "live" instead of "est.").
+* New: bottom "Trade Ticket" summary — Buy Price, Sell Price T1/T2, Stop Loss,
+  spot buy trigger, and the analysis Date & Time (IST).
+* New: live-analysis clock in the header; market data, indicators and news are
+  re-analyzed every refresh cycle.
+* The Angel One adapter now also supplies live per-strike premiums (oc_ltp).
 
 = 2.2.0 =
 * New: "Specific strike" input on the dashboard — enter a strike (e.g. 57500),

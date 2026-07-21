@@ -162,18 +162,27 @@ class FnOSP_Signal_Engine {
 			}
 
 			if ( ! empty( $opts['strike'] ) && (float) $opts['strike'] > 0 ) {
-				$option_plan = $this->build_option_plan(
-					$snapshot, $direction, (float) $opts['strike'],
-					isset( $opts['opt_type'] ) ? strtoupper( $opts['opt_type'] ) : 'CE',
-					$dte, isset( $opts['premium'] ) ? (float) $opts['premium'] : 0.0, $expiry_ts
-				);
+				$strk  = (float) $opts['strike'];
+				$otype = isset( $opts['opt_type'] ) ? strtoupper( $opts['opt_type'] ) : 'CE';
+				// Priority for the "live" premium: user-entered > live option chain > model estimate.
+				$live  = ( isset( $opts['premium'] ) && (float) $opts['premium'] > 0 )
+					? (float) $opts['premium']
+					: $this->live_premium( $snapshot, $strk, $otype );
+				$option_plan = $this->build_option_plan( $snapshot, $direction, $strk, $otype, $dte, $live, $expiry_ts );
 			} else {
 				$otype = ( 'SELL' === $direction ) ? 'PE' : 'CE';
-				$option_plan = $this->build_option_plan( $snapshot, $direction, $atm, $otype, $dte, 0.0, $expiry_ts );
+				$live  = $this->live_premium( $snapshot, $atm, $otype );
+				$option_plan = $this->build_option_plan( $snapshot, $direction, $atm, $otype, $dte, $live, $expiry_ts );
 			}
-			$call_plan = $this->build_option_plan( $snapshot, 'BUY', $atm, 'CE', $dte, 0.0, $expiry_ts );
-			$put_plan  = $this->build_option_plan( $snapshot, 'SELL', $atm, 'PE', $dte, 0.0, $expiry_ts );
+			$call_plan = $this->build_option_plan( $snapshot, 'BUY', $atm, 'CE', $dte, $this->live_premium( $snapshot, $atm, 'CE' ), $expiry_ts );
+			$put_plan  = $this->build_option_plan( $snapshot, 'SELL', $atm, 'PE', $dte, $this->live_premium( $snapshot, $atm, 'PE' ), $expiry_ts );
 		}
+
+		// Pre-confirmation PROJECTION: expected levels for the current directional
+		// lean even before the confidence gate confirms, so the UI can show the
+		// buy premium / T1 / T2 in advance ("getting ready").
+		$lean_dir   = ( $net > 0 ) ? 'BUY' : ( ( $net < 0 ) ? 'SELL' : 'BUY' );
+		$projection = $this->build_trade_setup( $lean_dir, $snapshot, max( 1, $confidence ) );
 
 
 
@@ -205,6 +214,9 @@ class FnOSP_Signal_Engine {
 			),
 			'risk_factors'  => $risk['factors'],
 			'setup'         => $setup,
+			'projection'    => $projection,
+			'projection_direction' => $lean_dir,
+			'confirmed'     => ( 'NO TRADE' !== $direction ),
 			'option_strategy' => $strategy,
 			'probabilities' => $probabilities,
 			'option_plan'   => $option_plan,
@@ -434,6 +446,7 @@ class FnOSP_Signal_Engine {
 			'moneyness'     => $moneyness,
 			'delta'         => $delta,
 			'premium_now'   => $prem_now,
+			'live_premium'  => ( $live > 0 ? round( $live, 2 ) : null ),
 			'premium_entry_low'  => $prem_entry_lo,
 			'premium_entry_high' => $prem_entry_hi,
 			'premium_range'      => '₹' . number_format_i18n( $prem_entry_lo, 2 ) . ' – ₹' . number_format_i18n( $prem_entry_hi, 2 ),
@@ -1177,6 +1190,27 @@ class FnOSP_Signal_Engine {
 			return 10;
 		}
 		return 5;
+	}
+
+	/**
+	 * Live option premium for a strike/type from the snapshot's option-chain LTP map.
+	 * Returns 0.0 when no live premium is available (engine then uses a model estimate).
+	 *
+	 * @param array  $snapshot Snapshot.
+	 * @param float  $strike   Strike.
+	 * @param string $type     CE|PE.
+	 * @return float
+	 */
+	private function live_premium( $snapshot, $strike, $type ) {
+		if ( empty( $snapshot['oc_ltp'] ) || ! is_array( $snapshot['oc_ltp'] ) ) {
+			return 0.0;
+		}
+		$key  = (string) (int) round( (float) $strike );
+		$side = ( 'PE' === strtoupper( $type ) ) ? 'pe' : 'ce';
+		if ( isset( $snapshot['oc_ltp'][ $key ][ $side ] ) && (float) $snapshot['oc_ltp'][ $key ][ $side ] > 0 ) {
+			return (float) $snapshot['oc_ltp'][ $key ][ $side ];
+		}
+		return 0.0;
 	}
 
 	// ---------------------------------------------------------------------

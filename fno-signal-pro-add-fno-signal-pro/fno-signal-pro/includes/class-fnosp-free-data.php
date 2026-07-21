@@ -326,6 +326,8 @@ class FnOSP_Free_Data {
 			'vix'          => $vix['ok'] ? $vix['value'] : $oc['vix'],
 			'call_oi_chg'  => $oc['call_oi_chg'],
 			'put_oi_chg'   => $oc['put_oi_chg'],
+			// Live per-strike option premiums from the chain (empty if unavailable).
+			'oc_ltp'       => isset( $oc['ltp_map'] ) && is_array( $oc['ltp_map'] ) ? $oc['ltp_map'] : array(),
 			// FII/DII best-effort (NSE) — neutral when unavailable.
 			'fii_net'      => $flows['fii_net'],
 			'dii_net'      => $flows['dii_net'],
@@ -800,9 +802,11 @@ class FnOSP_Free_Data {
 		$tot_pe_chg  = 0;
 		$strike_oi   = array();
 		$iv_samples  = array();
+		$ltp_map     = array(); // strike => [ce => lastPrice, pe => lastPrice] (LIVE option premiums).
 
 		foreach ( $body['records']['data'] as $row ) {
 			$strike = isset( $row['strikePrice'] ) ? (float) $row['strikePrice'] : 0;
+			$skey   = (string) (int) round( $strike );
 			if ( isset( $row['CE'] ) ) {
 				$ce          = $row['CE'];
 				$tot_ce_oi  += (int) ( $ce['openInterest'] ?? 0 );
@@ -811,6 +815,9 @@ class FnOSP_Free_Data {
 					$iv_samples[] = (float) $ce['impliedVolatility'];
 				}
 				$strike_oi[ $strike ]['ce'] = (int) ( $ce['openInterest'] ?? 0 );
+				if ( isset( $ce['lastPrice'] ) && (float) $ce['lastPrice'] > 0 ) {
+					$ltp_map[ $skey ]['ce'] = round( (float) $ce['lastPrice'], 2 );
+				}
 			}
 			if ( isset( $row['PE'] ) ) {
 				$pe          = $row['PE'];
@@ -820,6 +827,9 @@ class FnOSP_Free_Data {
 					$iv_samples[] = (float) $pe['impliedVolatility'];
 				}
 				$strike_oi[ $strike ]['pe'] = (int) ( $pe['openInterest'] ?? 0 );
+				if ( isset( $pe['lastPrice'] ) && (float) $pe['lastPrice'] > 0 ) {
+					$ltp_map[ $skey ]['pe'] = round( (float) $pe['lastPrice'], 2 );
+				}
 			}
 		}
 
@@ -835,6 +845,7 @@ class FnOSP_Free_Data {
 			'vix'         => $default['vix'], // India VIX needs a separate source.
 			'call_oi_chg' => $tot_ce_chg,
 			'put_oi_chg'  => $tot_pe_chg,
+			'ltp_map'     => $ltp_map,
 			'reason'      => 'Live option chain loaded.',
 		);
 	}

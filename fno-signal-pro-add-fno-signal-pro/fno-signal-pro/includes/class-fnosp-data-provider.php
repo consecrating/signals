@@ -166,6 +166,8 @@ class FnOSP_Data_Provider {
 			'sector_strength' => $f( 'sector_strength', 0 ), // -100..100.
 			'news_sentiment'  => $f( 'news_sentiment', 0 ),  // -1..1.
 			'lot_size'     => isset( $raw['lot_size'] ) ? (int) $raw['lot_size'] : self::default_lot_size( $instrument ),
+			// Live per-strike option premiums, if the feed supplies them.
+			'oc_ltp'       => isset( $raw['oc_ltp'] ) && is_array( $raw['oc_ltp'] ) ? $raw['oc_ltp'] : array(),
 		);
 
 		return $snapshot;

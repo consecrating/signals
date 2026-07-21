@@ -84,6 +84,7 @@ def build(spot: float, instruments: List[dict], market: Dict[str, dict],
 
     tot_ce_oi = tot_pe_oi = 0.0
     strike_oi: Dict[float, Dict[str, float]] = {}
+    ltp_map: Dict[str, Dict[str, float]] = {}  # "strike" -> {ce, pe} live premiums
     expiry = instruments[0].get("expiry", "")
     t = _days_to_expiry(expiry) / 365.0
 
@@ -98,18 +99,25 @@ def build(spot: float, instruments: List[dict], market: Dict[str, dict],
     for r in instruments:
         row = market.get(r["token"])
         oi = _oi(row)
+        ltp = _ltp(row)
         strike = r["strike"]
+        skey = str(int(round(strike)))
         strike_oi.setdefault(strike, {})
+        ltp_map.setdefault(skey, {})
         if r["opt_type"] == "CE":
             tot_ce_oi += oi
             strike_oi[strike]["ce"] = oi
+            if ltp > 0:
+                ltp_map[skey]["ce"] = round(ltp, 2)
             if strike == atm:
-                atm_ce_ltp = _ltp(row)
+                atm_ce_ltp = ltp
         else:
             tot_pe_oi += oi
             strike_oi[strike]["pe"] = oi
+            if ltp > 0:
+                ltp_map[skey]["pe"] = round(ltp, 2)
             if strike == atm:
-                atm_pe_ltp = _ltp(row)
+                atm_pe_ltp = ltp
 
     pcr = round(tot_pe_oi / tot_ce_oi, 2) if tot_ce_oi > 0 else 1.0
     max_pain = compute_max_pain(strike_oi)
@@ -134,6 +142,7 @@ def build(spot: float, instruments: List[dict], market: Dict[str, dict],
         "expiry": expiry,
         "tot_ce_oi": tot_ce_oi,
         "tot_pe_oi": tot_pe_oi,
+        "ltp_map": ltp_map,
         "ok": True,
     })
     return result
