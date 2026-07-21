@@ -71,13 +71,26 @@ class FnOSP_Email {
 		$wrap_end  = '</div>';
 		$body      = $wrap_open . $html . $wrap_end;
 
+		// Capture the real mailer error (PHPMailer/SMTP) so failures are actionable
+		// instead of a generic "returned false".
+		$captured = null;
+		$catch    = function ( $wp_error ) use ( &$captured ) {
+			$captured = $wp_error;
+		};
+		add_action( 'wp_mail_failed', $catch );
 		$ok = wp_mail( $to, $subject, $body, $headers );
+		remove_action( 'wp_mail_failed', $catch );
+
 		if ( ! $ok ) {
-			return new WP_Error( 'fnosp_email_fail', __( 'wp_mail() returned false. Check your site mailer/SMTP configuration.', 'fno-signal-pro' ) );
+			$detail = ( $captured instanceof WP_Error ) ? $captured->get_error_message() : '';
+			$msg    = $detail
+				? sprintf( /* translators: %s: mailer error */ __( 'Mail send failed: %s', 'fno-signal-pro' ), $detail )
+				: __( 'wp_mail() returned false. Your WordPress site cannot send email — install an SMTP plugin (e.g. WP Mail SMTP) and connect a mail service.', 'fno-signal-pro' );
+			return new WP_Error( 'fnosp_email_fail', $msg );
 		}
 		return array(
 			'sent'       => count( $to ),
-			'recipients' => $to,
+			'recipients' => implode( ', ', $to ),
 		);
 	}
 

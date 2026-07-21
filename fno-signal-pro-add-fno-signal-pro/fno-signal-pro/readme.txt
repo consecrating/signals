@@ -4,7 +4,7 @@ Tags: trading, futures, options, nifty, banknifty, signals, fno
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 2.3.0
+Stable tag: 2.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -170,6 +170,12 @@ Any model id your Anthropic account supports. Set it in Settings. The default is
 a current Sonnet model; you can change it to an Opus model id if you prefer.
 
 == Changelog ==
+
+= 2.3.1 =
+* Improve: the email test now reports the real mailer/SMTP error (captured via
+  wp_mail_failed) instead of a generic message, so failures are actionable.
+  Note: sending email requires a working site mailer — if tests don't arrive,
+  install an SMTP plugin (e.g. WP Mail SMTP) and connect a mail service.
 
 = 2.3.0 =
 * New: pre-confirmation projection — the expected Buy premium, T1, T2, SL and
