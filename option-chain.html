@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FNO Signal Pro — Option Chain Analyzer</title>
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+  <!-- Risk Banner -->
+  <div class="risk-banner">⚠️ RISK WARNING: F&amp;O trading involves substantial risk of capital loss. Signals are for informational purposes only — not financial advice. Trade at your own risk.</div>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="logo-icon">F</div>
+      <span>FNO Signal Pro</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="index.html">Dashboard</a></li>
+      <li><a href="signals.html">Signals</a></li>
+      <li><a href="option-chain.html">Option Chain</a></li>
+      <li><a href="scanner.html">Scanner</a></li>
+      <li><a href="charts.html">Charts</a></li>
+      <li><a href="tools.html">Tools</a></li>
+    </ul>
+    <div class="nav-status">
+      <div id="market-status" class="market-status-badge closed">
+        <span class="status-dot"></span>CLOSED
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Content -->
+  <main class="page-container">
+    <!-- Controls -->
+    <section class="flex items-center gap-2" style="flex-wrap:wrap">
+      <div>
+        <label for="oc-symbol-select">Symbol</label>
+        <select id="oc-symbol-select">
+          <!-- Populated by JS -->
+        </select>
+      </div>
+      <button id="oc-load-btn" class="btn btn-accent" style="margin-top:1.2rem">Load Option Chain</button>
+    </section>
+
+    <!-- Analytics -->
+    <section class="mt-2" id="oc-analytics">
+      <div class="grid grid-3">
+        <div class="card skeleton" style="height:160px"></div>
+        <div class="card skeleton" style="height:160px"></div>
+        <div class="card skeleton" style="height:160px"></div>
+      </div>
+    </section>
+
+    <!-- OI Chart -->
+    <section class="mt-2">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">OI Build-up Chart (CE vs PE)</span>
+        </div>
+        <canvas id="oi-chart-canvas" style="width:100%;height:250px"></canvas>
+      </div>
+    </section>
+
+    <!-- Option Chain Table -->
+    <section class="mt-2" id="oc-table-container">
+      <div class="loading-overlay">
+        <div class="spinner"></div>
+        <span>Loading option chain...</span>
+      </div>
+    </section>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer">
+      <strong>⚠️ DISCLAIMER:</strong> For informational purposes only. Not financial advice. Trade at your own risk. 
+      Option chain data is sourced from NSE via proxy and may have minor delays. OI changes are compared to previous close.
+    </div>
+  </main>
+
+  <script type="module" src="js/ui/option-chain-page.js"></script>
+</body>
+</html>

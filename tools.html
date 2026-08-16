@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FNO Signal Pro — Advanced Trading Tools</title>
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+  <!-- Risk Banner -->
+  <div class="risk-banner">⚠️ RISK WARNING: F&amp;O trading involves substantial risk of capital loss. Signals are for informational purposes only — not financial advice. Trade at your own risk.</div>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="logo-icon">F</div>
+      <span>FNO Signal Pro</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="index.html">Dashboard</a></li>
+      <li><a href="signals.html">Signals</a></li>
+      <li><a href="option-chain.html">Option Chain</a></li>
+      <li><a href="scanner.html">Scanner</a></li>
+      <li><a href="charts.html">Charts</a></li>
+      <li><a href="tools.html">Tools</a></li>
+    </ul>
+    <div class="nav-status">
+      <div id="market-status" class="market-status-badge closed">
+        <span class="status-dot"></span>CLOSED
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Content -->
+  <main class="page-container">
+    <div class="section-header">
+      <h2>Advanced Trading Tools</h2>
+      <span class="section-badge">Capital: ₹12,000</span>
+    </div>
+
+    <div class="grid grid-2 mt-2">
+      <!-- Position Size Calculator -->
+      <div class="card tool-card">
+        <h3>📐 Position Size Calculator</h3>
+        <p class="text-xs text-muted mb-2">Calculate optimal position size based on your risk tolerance</p>
+        <div class="grid grid-2" style="gap:0.5rem">
+          <div>
+            <label for="pos-capital">Capital (₹)</label>
+            <input type="number" id="pos-capital" class="input" value="12000">
+          </div>
+          <div>
+            <label for="pos-risk-pct">Risk % per trade</label>
+            <input type="number" id="pos-risk-pct" class="input" value="2" step="0.5">
+          </div>
+          <div>
+            <label for="pos-sl-points">Stop Loss (points)</label>
+            <input type="number" id="pos-sl-points" class="input" value="50">
+          </div>
+          <div>
+            <label for="pos-lot-size">Lot Size</label>
+            <input type="number" id="pos-lot-size" class="input" value="25">
+          </div>
+          <div>
+            <label for="pos-premium">Premium (optional)</label>
+            <input type="number" id="pos-premium" class="input" value="0" placeholder="₹ per unit">
+          </div>
+        </div>
+        <button id="pos-calc-btn" class="btn btn-primary mt-2 w-full">Calculate Position</button>
+        <div id="pos-calc-result" class="tool-result"></div>
+      </div>
+
+      <!-- Black-Scholes Calculator -->
+      <div class="card tool-card">
+        <h3>📊 Black-Scholes Option Pricer</h3>
+        <p class="text-xs text-muted mb-2">Theoretical option price with Greeks</p>
+        <div class="grid grid-2" style="gap:0.5rem">
+          <div>
+            <label for="bs-spot">Spot Price</label>
+            <input type="number" id="bs-spot" class="input" value="24000">
+          </div>
+          <div>
+            <label for="bs-strike">Strike Price</label>
+            <input type="number" id="bs-strike" class="input" value="24000">
+          </div>
+          <div>
+            <label for="bs-dte">Days to Expiry</label>
+            <input type="number" id="bs-dte" class="input" value="3">
+          </div>
+          <div>
+            <label for="bs-iv">IV (%)</label>
+            <input type="number" id="bs-iv" class="input" value="15" step="0.5">
+          </div>
+          <div>
+            <label for="bs-rate">Risk-Free Rate (%)</label>
+            <input type="number" id="bs-rate" class="input" value="6.5" step="0.1">
+          </div>
+        </div>
+        <button id="bs-calc-btn" class="btn btn-accent mt-2 w-full">Calculate Premium & Greeks</button>
+        <div id="bs-calc-result" class="tool-result"></div>
+      </div>
+
+      <!-- Risk/Reward Calculator -->
+      <div class="card tool-card">
+        <h3>⚖️ Risk / Reward Calculator</h3>
+        <p class="text-xs text-muted mb-2">Evaluate trade setup quality before entry</p>
+        <div class="grid grid-2" style="gap:0.5rem">
+          <div>
+            <label for="rr-entry">Entry Price</label>
+            <input type="number" id="rr-entry" class="input" value="24000">
+          </div>
+          <div>
+            <label for="rr-sl">Stop Loss</label>
+            <input type="number" id="rr-sl" class="input" value="23900">
+          </div>
+          <div>
+            <label for="rr-target">Target</label>
+            <input type="number" id="rr-target" class="input" value="24200">
+          </div>
+          <div>
+            <label for="rr-lots">Lots</label>
+            <input type="number" id="rr-lots" class="input" value="1">
+          </div>
+          <div>
+            <label for="rr-lot-size">Lot Size</label>
+            <input type="number" id="rr-lot-size" class="input" value="25">
+          </div>
+        </div>
+        <button id="rr-calc-btn" class="btn btn-primary mt-2 w-full">Calculate R:R</button>
+        <div id="rr-calc-result" class="tool-result"></div>
+      </div>
+
+      <!-- Expiry Calendar -->
+      <div class="card tool-card">
+        <h3>📅 Expiry Calendar</h3>
+        <p class="text-xs text-muted mb-2">Upcoming weekly and monthly expiry dates</p>
+        <div id="expiry-calendar">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Lot Size Reference -->
+    <div class="card tool-card mt-2">
+      <h3>📋 Lot Size Reference</h3>
+      <p class="text-xs text-muted mb-2">F&amp;O lot sizes for all tradeable instruments</p>
+      <div id="lot-size-table" class="overflow-auto">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer">
+      <strong>⚠️ DISCLAIMER:</strong> For informational purposes only. Not financial advice. Trade at your own risk. 
+      Calculator results are theoretical estimates. Black-Scholes assumes log-normal distribution and constant volatility — 
+      actual market behavior may differ significantly. Always validate with live market prices before trading.
+    </div>
+  </main>
+
+  <script type="module" src="js/ui/tools-page.js"></script>
+</body>
+</html>
