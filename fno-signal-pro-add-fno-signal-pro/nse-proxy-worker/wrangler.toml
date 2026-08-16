@@ -1,0 +1,18 @@
+# Cloudflare Worker config for the F&O Signal Pro NSE proxy.
+# Deploy with: npx wrangler deploy
+# Docs: https://developers.cloudflare.com/workers/wrangler/
+
+name = "fno-nse-proxy"
+main = "src/worker.js"
+compatibility_date = "2024-11-01"
+
+# Free plan works fine. Uncomment to bind a custom route/domain if you have one.
+# routes = [
+#   { pattern = "nse-proxy.example.com", custom_domain = true }
+# ]
+
+# Optional shared secret to stop others using your proxy.
+# Prefer setting it as a secret instead of plain text:
+#   npx wrangler secret put PROXY_SECRET
+# [vars]
+# PROXY_SECRET = "change-me"
