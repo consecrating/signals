@@ -72,40 +72,72 @@ function setCache(key, data) {
 // ─── NSE Proxy Fetcher ───────────────────────────────────────────────────────
 
 /**
+ * Fetch with timeout wrapper.
+ */
+async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timer);
+    return res;
+  } catch (err) {
+    clearTimeout(timer);
+    throw err;
+  }
+}
+
+/**
  * Fetch from NSE via the Cloudflare Worker proxy.
  * Handles errors gracefully — returns null on failure.
  */
 async function fetchNSE(nseUrl) {
   const proxyUrl = `${NSE_PROXY_BASE}?url=${encodeURIComponent(nseUrl)}&key=${NSE_PROXY_KEY}`;
   try {
-    const res = await fetch(proxyUrl, {
+    const res = await fetchWithTimeout(proxyUrl, {
       headers: { 'Accept': 'application/json' },
-    });
+    }, 8000);
     if (!res.ok) {
       console.warn(`NSE Proxy error: ${res.status} for ${nseUrl}`);
       return null;
     }
-    return await res.json();
+    const data = await res.json();
+    if (data && data.error) {
+      console.warn(`NSE Proxy returned error: ${data.error}`);
+      return null;
+    }
+    return data;
   } catch (err) {
-    console.error(`NSE fetch failed: ${err.message}`);
+    if (err.name === 'AbortError') {
+      console.warn(`NSE fetch timeout for ${nseUrl}`);
+    } else {
+      console.warn(`NSE fetch failed: ${err.message}`);
+    }
     return null;
   }
 }
 
 /**
  * Fetch from Yahoo Finance chart API.
+ * NOTE: Yahoo blocks CORS from browsers. This only works server-side or via proxy.
  */
 async function fetchYahoo(symbol, interval = '15m', range = '5d') {
   const yahooSymbol = YAHOO_SYMBOLS[symbol] || `${symbol}.NS`;
   const url = `${YAHOO_CHART_URL}${encodeURIComponent(yahooSymbol)}?interval=${interval}&range=${range}&includePrePost=false`;
   try {
-    const res = await fetch(url);
-    if (!res.ok) return null;
+    const res = await fetchWithTimeout(url, {
+      mode: 'cors',
+    }, 6000);
+    if (!res.ok) {
+      console.warn(`Yahoo ${res.status} for ${symbol}`);
+      return null;
+    }
     const data = await res.json();
     if (!data.chart || !data.chart.result || !data.chart.result[0]) return null;
     return data.chart.result[0];
   } catch (err) {
-    console.warn(`Yahoo fetch failed for ${symbol}: ${err.message}`);
+    // CORS errors, network errors, and timeouts all land here
+    // This is expected when running in browser without a proxy
     return null;
   }
 }
@@ -388,65 +420,70 @@ export async function getDailyCandles(symbol, range = '6mo') {
  * This is the canonical data contract expected by SignalEngine.generate().
  */
 export async function buildSnapshot(symbol) {
-  // Fetch intraday candles and option chain in parallel
-  const [candles, optionChain, fiiDii, vix] = await Promise.all([
-    getIntradayCandles(symbol, '15m', '5d'),
-    getOptionChain(symbol),
-    getFIIDII(),
-    getIndiaVIX(),
-  ]);
+  try {
+    // Fetch intraday candles and option chain in parallel
+    const [candles, optionChain, fiiDii, vix] = await Promise.all([
+      getIntradayCandles(symbol, '15m', '5d').catch(() => null),
+      getOptionChain(symbol).catch(() => null),
+      getFIIDII().catch(() => null),
+      getIndiaVIX().catch(() => null),
+    ]);
 
-  if (!candles || candles.closes.length < 20) {
-    return null; // Insufficient data
+    if (!candles || candles.closes.length < 20) {
+      return null; // Insufficient data
+    }
+
+    const ltp = candles.closes[candles.closes.length - 1];
+
+    // Determine nearest expiry for option plan
+    let expiry = null;
+    if (optionChain && optionChain.expiry) {
+      expiry = optionChain.expiry;
+    }
+
+    const snapshot = {
+      symbol,
+      ltp,
+      opens: candles.opens,
+      highs: candles.highs,
+      lows: candles.lows,
+      closes: candles.closes,
+      volumes: candles.volumes,
+      timestamps: candles.timestamps,
+
+      // Option chain data
+      pcr: optionChain?.pcr || null,
+      maxPain: optionChain?.maxPain || null,
+      iv: optionChain ? optionChain.avgIV / 100 : 0.15, // Convert to decimal
+      ivPercentile: null, // Would need historical IV for this
+      oiChange: optionChain ? {
+        ceOI: optionChain.callOIChange,
+        peOI: optionChain.putOIChange,
+      } : null,
+
+      // Institutional
+      fiiFlow: fiiDii?.fii?.netValue || null,
+      diiFlow: fiiDii?.dii?.netValue || null,
+      blockDeals: null,
+
+      // Market context
+      vix: vix?.value || null,
+      newsSentiment: null, // Will be computed separately if needed
+
+      // Expiry for option plans
+      expiry,
+
+      // Metadata
+      isIndex: FNO_INDICES.includes(symbol),
+      lotSize: LOT_SIZES[symbol] || 25,
+      timestamp: new Date().toISOString(),
+    };
+
+    return snapshot;
+  } catch (err) {
+    console.warn(`buildSnapshot failed for ${symbol}:`, err.message);
+    return null;
   }
-
-  const ltp = candles.closes[candles.closes.length - 1];
-
-  // Determine nearest expiry for option plan
-  let expiry = null;
-  if (optionChain && optionChain.expiry) {
-    expiry = optionChain.expiry;
-  }
-
-  const snapshot = {
-    symbol,
-    ltp,
-    opens: candles.opens,
-    highs: candles.highs,
-    lows: candles.lows,
-    closes: candles.closes,
-    volumes: candles.volumes,
-    timestamps: candles.timestamps,
-
-    // Option chain data
-    pcr: optionChain?.pcr || null,
-    maxPain: optionChain?.maxPain || null,
-    iv: optionChain ? optionChain.avgIV / 100 : 0.15, // Convert to decimal
-    ivPercentile: null, // Would need historical IV for this
-    oiChange: optionChain ? {
-      ceOI: optionChain.callOIChange,
-      peOI: optionChain.putOIChange,
-    } : null,
-
-    // Institutional
-    fiiFlow: fiiDii?.fii?.netValue || null,
-    diiFlow: fiiDii?.dii?.netValue || null,
-    blockDeals: null,
-
-    // Market context
-    vix: vix?.value || null,
-    newsSentiment: null, // Will be computed separately if needed
-
-    // Expiry for option plans
-    expiry,
-
-    // Metadata
-    isIndex: FNO_INDICES.includes(symbol),
-    lotSize: LOT_SIZES[symbol] || 25,
-    timestamp: new Date().toISOString(),
-  };
-
-  return snapshot;
 }
 
 /**

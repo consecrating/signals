@@ -106,5 +106,27 @@
   </main>
 
   <script type="module" src="js/ui/dashboard.js"></script>
+  <script>
+    // Safety net: force-resolve loading states after 10 seconds
+    // This runs independently of ES modules to catch any module loading failures
+    setTimeout(function() {
+      var scanner = document.getElementById('quick-scanner');
+      if (scanner && scanner.querySelector('.spinner')) {
+        scanner.innerHTML = '<div style="padding:1.5rem;text-align:center"><p style="font-size:1.5rem;margin-bottom:0.5rem">\u26a0\ufe0f</p><p style="color:#9ca3af;font-size:1rem;margin-bottom:0.5rem">Data Sources Unavailable</p><p style="color:#6b7280;font-size:0.72rem">NSE proxy or market data APIs are not responding.</p><p style="color:#6b7280;font-size:0.72rem;margin-top:0.25rem">This may be due to: invalid proxy key, market holiday, or CORS restrictions.</p><p style="font-size:0.72rem;margin-top:0.5rem"><a href="tools.html" style="color:#3b82f6">Tools</a> (Black-Scholes, Position Calculator) work offline 24/7.</p></div>';
+      }
+      var grid = document.getElementById('indices-grid');
+      if (grid && grid.querySelector('.skeleton')) {
+        grid.innerHTML = '<div class="card index-card"><span class="index-name">NIFTY 50</span><span class="index-price num">\u2014</span><span class="index-change text-muted">Data unavailable</span></div><div class="card index-card"><span class="index-name">BANKNIFTY</span><span class="index-price num">\u2014</span><span class="index-change text-muted">Data unavailable</span></div><div class="card index-card"><span class="index-name">SENSEX</span><span class="index-price num">\u2014</span><span class="index-change text-muted">Data unavailable</span></div><div class="card index-card"><span class="index-name">FINNIFTY</span><span class="index-price num">\u2014</span><span class="index-change text-muted">Data unavailable</span></div>';
+      }
+      var vix = document.getElementById('vix-display');
+      if (vix && vix.querySelector('.skeleton')) {
+        vix.innerHTML = '<span class="vix-value text-muted" style="font-size:1.5rem">\u2014</span><p style="color:#6b7280;font-size:0.72rem;margin-top:0.25rem">Data unavailable</p>';
+      }
+      var fii = document.getElementById('fii-dii-panel');
+      if (fii && fii.querySelector('.skeleton')) {
+        fii.innerHTML = '<p style="color:#6b7280;font-size:0.8rem">Data unavailable</p>';
+      }
+    }, 10000);
+  </script>
 </body>
 </html>

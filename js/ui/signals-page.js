@@ -77,10 +77,23 @@ async function generateSignal() {
   showLoading(resultsDiv);
 
   try {
-    // 1. Build market snapshot
-    const snapshot = await buildSnapshot(symbol);
+    // Timeout: 12 seconds for signal generation
+    const snapshotPromise = buildSnapshot(symbol);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Data fetch timeout — market may be closed')), 12000)
+    );
+
+    const snapshot = await Promise.race([snapshotPromise, timeoutPromise]);
+    
     if (!snapshot) {
-      showError(resultsDiv, 'Unable to fetch market data for ' + symbol + '. Market may be closed.');
+      resultsDiv.innerHTML = `
+        <div class="card" style="text-align:center;padding:3rem">
+          <p style="font-size:1.5rem;margin-bottom:0.5rem">📴</p>
+          <p class="text-muted" style="font-size:1rem;margin-bottom:0.5rem">Market Data Unavailable</p>
+          <p class="text-xs text-muted">Unable to fetch live data for ${symbol}. This usually means the market is closed.</p>
+          <p class="text-xs text-muted mt-1">NSE Market Hours: Mon-Fri, 9:15 AM – 3:30 PM IST</p>
+          <p class="text-xs text-muted mt-1">Try the <a href="tools.html">Tools</a> page for Black-Scholes calculator and position sizing (available 24/7).</p>
+        </div>`;
       return;
     }
 
@@ -98,7 +111,13 @@ async function generateSignal() {
 
   } catch (e) {
     console.error('Signal generation error:', e);
-    showError(resultsDiv, 'Signal generation failed: ' + e.message);
+    resultsDiv.innerHTML = `
+      <div class="card" style="text-align:center;padding:3rem">
+        <p style="font-size:1.5rem;margin-bottom:0.5rem">📴</p>
+        <p class="text-muted" style="font-size:1rem;margin-bottom:0.5rem">Market Closed</p>
+        <p class="text-xs text-muted">${e.message}</p>
+        <p class="text-xs text-muted mt-1">Live signals are available during NSE market hours: Mon-Fri, 9:15 AM – 3:30 PM IST</p>
+      </div>`;
   }
 }
 
