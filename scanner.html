@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FNO Signal Pro — Market Scanner</title>
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+  <!-- Risk Banner -->
+  <div class="risk-banner">⚠️ RISK WARNING: F&amp;O trading involves substantial risk of capital loss. Signals are for informational purposes only — not financial advice. Trade at your own risk.</div>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="logo-icon">F</div>
+      <span>FNO Signal Pro</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="index.html">Dashboard</a></li>
+      <li><a href="signals.html">Signals</a></li>
+      <li><a href="option-chain.html">Option Chain</a></li>
+      <li><a href="scanner.html">Scanner</a></li>
+      <li><a href="charts.html">Charts</a></li>
+      <li><a href="tools.html">Tools</a></li>
+    </ul>
+    <div class="nav-status">
+      <div id="market-status" class="market-status-badge closed">
+        <span class="status-dot"></span>CLOSED
+      </div>
+    </div>
+  </nav>
+
+  <!-- Page Content -->
+  <main class="page-container">
+    <!-- Controls -->
+    <section class="flex items-center justify-between" style="flex-wrap:wrap;gap:1rem">
+      <div class="flex items-center gap-2">
+        <div>
+          <label for="universe-select">Universe</label>
+          <select id="universe-select">
+            <option value="all">All F&amp;O Instruments (23)</option>
+            <option value="indices">Indices Only (5)</option>
+            <option value="stocks">Stocks Only (18)</option>
+          </select>
+        </div>
+        <button id="scan-btn" class="btn btn-primary" style="margin-top:1.2rem">🔍 Scan Now</button>
+      </div>
+      <div class="flex items-center gap-2" style="margin-top:1.2rem">
+        <label style="margin:0;white-space:nowrap">Min Confidence:</label>
+        <input type="range" id="confidence-slider" min="50" max="95" value="65" style="width:120px">
+        <span id="confidence-value" class="num text-sm">65%</span>
+      </div>
+    </section>
+
+    <!-- Scan Status -->
+    <div id="scan-status" class="text-xs text-muted mt-1"></div>
+
+    <!-- Scanner Results -->
+    <section class="mt-2" id="scanner-results">
+      <div class="loading-overlay">
+        <div class="spinner"></div>
+        <span>Scanning market...</span>
+      </div>
+    </section>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer">
+      <strong>⚠️ DISCLAIMER:</strong> For informational purposes only. Not financial advice. Trade at your own risk. 
+      Scanner results are based on quantitative analysis and are not guaranteed. Always verify signals independently 
+      and apply proper risk management. Never trade without a stop loss.
+    </div>
+  </main>
+
+  <script type="module" src="js/ui/scanner-page.js"></script>
+</body>
+</html>
