@@ -1,0 +1,89 @@
+/* F&O Signal Pro — admin styles (v2 clean) */
+.fnosp-wrap .fnosp-title { display:flex; align-items:center; gap:8px; }
+.fnosp-wrap .fnosp-title .dashicons { color:#2271b1; font-size:28px; width:28px; height:28px; }
+.fnosp-live-dot { width:10px; height:10px; border-radius:50%; background:#14794a; display:inline-block; margin-left:8px; }
+.fnosp-live-dot.pulse { animation: fnosp-pulse .6s ease; }
+@keyframes fnosp-pulse { 0%{transform:scale(1);opacity:1} 50%{transform:scale(1.8);opacity:.5} 100%{transform:scale(1);opacity:1} }
+
+.fnosp-controls { display:flex; flex-wrap:wrap; align-items:center; gap:10px; background:#fff; border:1px solid #dcdcde; border-radius:8px; padding:12px 14px; margin:12px 0; }
+.fnosp-controls label { font-weight:600; }
+.fnosp-or { color:#888; font-size:13px; }
+.fnosp-refresh-info { margin-left:auto; font-size:11px; color:#14794a; font-weight:600; }
+
+.fnosp-result { margin-top:8px; }
+.fnosp-loading { color:#2271b1; font-weight:600; }
+.fnosp-error { color:#b32424; font-weight:600; }
+.fnosp-muted { color:#888; font-style:italic; }
+
+/* Signal card */
+.fnosp-card { background:#fff; border:1px solid #dcdcde; border-radius:10px; padding:16px; margin:8px 0; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+.fnosp-card-head { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
+.fnosp-badge { display:inline-block; padding:5px 12px; border-radius:999px; font-weight:700; letter-spacing:.5px; font-size:13px; }
+.fnosp-badge.buy { background:#e6f6ec; color:#14794a; border:1px solid #9bd9b4; }
+.fnosp-badge.sell { background:#fdeaea; color:#b32424; border:1px solid #f0a8a8; }
+.fnosp-badge.notrade { background:#f0f0f1; color:#555; border:1px solid #d0d0d2; }
+.fnosp-badge-sm { font-size:11px; padding:3px 8px; }
+.fnosp-conf { margin-left:auto; font-size:13px; color:#444; }
+.fnosp-meter { height:6px; border-radius:3px; background:#eee; overflow:hidden; margin:6px 0 10px; }
+.fnosp-meter > span { display:block; height:100%; background:linear-gradient(90deg,#f0ad4e,#2271b1); }
+
+/* Recommended strike card */
+.fnosp-rec { background:linear-gradient(135deg,#f0f9ff,#e6f0fb); border:2px solid #2271b1; border-radius:12px; padding:14px 16px; margin:10px 0; }
+.fnosp-rec-title { font-size:16px; font-weight:800; color:#11203f; margin-bottom:8px; }
+.fnosp-rec-cond { font-size:13px; color:#374151; margin-top:5px; }
+.fnosp-rec-warn { font-size:12px; color:#b32424; margin-top:4px; }
+
+.fnosp-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin:8px 0; }
+.fnosp-tile { background:#fff; border:1px solid #d4e3f3; border-radius:8px; padding:8px 10px; }
+.fnosp-tile .k { font-size:10px; text-transform:uppercase; letter-spacing:.4px; color:#777; }
+.fnosp-tile .v { font-size:15px; font-weight:700; color:#1d2327; }
+
+/* Expert advice */
+.fnosp-expert { margin-top:12px; background:#11203f; color:#eaf0fb; padding:12px 14px; border-radius:10px; font-size:13px; }
+.fnosp-expert-head { font-weight:700; font-size:14px; margin-bottom:5px; color:#ffd97a; }
+
+/* Scanner picks */
+.fnosp-scan-meta { font-size:12px; color:#666; margin-bottom:6px; }
+.fnosp-section-title { margin:12px 0 4px; font-size:13px; text-transform:uppercase; letter-spacing:.5px; color:#50575e; }
+.fnosp-pick { padding:8px 10px; border-bottom:1px solid #eee; }
+.fnosp-pick:last-child { border-bottom:0; }
+.fnosp-pick-conf { color:#666; font-size:12px; }
+.fnosp-pick-levels { font-size:12px; color:#333; margin-top:3px; font-weight:600; }
+.fnosp-pick-advice { font-size:12px; color:#2271b1; font-style:italic; margin-top:2px; }
+
+/* Chart */
+.fnosp-chart-wrap { background:#fff; border:1px solid #dcdcde; border-radius:10px; padding:14px 16px; margin:14px 0; }
+.fnosp-chart-title { font-weight:700; font-size:14px; margin-bottom:8px; color:#1d2327; }
+#fnosp-tvchart { height:460px; width:100%; }
+
+/* Misc */
+.fnosp-disclaimer { color:#777; font-size:11px; margin-top:10px; }
+.fnosp-tg-ok { color:#14794a; font-weight:600; }
+.fnosp-tg-err { color:#b32424; font-weight:600; }
+.fnosp-help.card { max-width:760px; }
+
+
+/* Call & Put side-by-side cards */
+.fnosp-cp-wrap { margin: 12px 0; }
+.fnosp-cp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 600px) { .fnosp-cp-grid { grid-template-columns: 1fr; } }
+.fnosp-cp-box { border-radius: 10px; padding: 12px 14px; }
+.fnosp-cp-call { background: #e6f6ec; border: 2px solid #14794a; }
+.fnosp-cp-put { background: #fdeaea; border: 2px solid #b32424; }
+.fnosp-cp-head { font-weight: 800; font-size: 14px; margin-bottom: 4px; }
+.fnosp-cp-call .fnosp-cp-head { color: #14794a; }
+.fnosp-cp-put .fnosp-cp-head { color: #b32424; }
+.fnosp-cp-strike { font-size: 18px; font-weight: 700; color: #11203f; margin-bottom: 6px; }
+.fnosp-cp-row { font-size: 13px; color: #333; margin: 2px 0; }
+.fnosp-cp-cond { font-size: 12px; color: #555; margin-top: 6px; font-style: italic; }
+
+
+.fnosp-locked-badge { font-size: 11px; background: #f0f0f1; color: #555; padding: 2px 8px; border-radius: 4px; margin-left: 8px; }
+
+
+/* Advanced analytics */
+.fnosp-adv-wrap { margin: 12px 0; padding: 12px 14px; background: #fafbfc; border: 1px solid #e2e5ea; border-radius: 10px; }
+.fnosp-adv-wrap .fnosp-tile { background: #fff; }
+
+
+.fnosp-premium-note { font-size: 11px; color: #888; font-style: italic; margin-top: 6px; }
