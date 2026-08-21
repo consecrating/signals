@@ -1,0 +1,13 @@
+{
+  "name": "fno-nse-proxy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloudflare Worker that proxies NSE (nseindia.com) requests for the F&O Signal Pro WordPress plugin.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^3.80.0"
+  }
+}
