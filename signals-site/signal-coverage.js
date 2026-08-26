@@ -226,4 +226,5 @@
     FACTOR_WEIGHTS: FACTOR_WEIGHTS,
     MIN_ACTIONABLE_COVERAGE: MIN_ACTIONABLE_COVERAGE
   };
-})(typeof window !== 'undefined' ? window : this);
+})(typeof globalThis !== 'undefined' ? globalThis
+  : (typeof window !== 'undefined' ? window : this));
